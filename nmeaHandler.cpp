@@ -14,14 +14,7 @@ class nmeaHandler {
 
 private:
 
-public:
-
-	//this class supports the encoding of three NMEA sentence types, GGA, RMC, and VTG
-	enum messageTypes { GGA, RMC, VTG };
-	messageTypes messageType;
-
 	// port fields for serial communication
-	HANDLE hSerial;
 	LPCSTR portName;
 	int baudRate;
 
@@ -41,8 +34,23 @@ public:
 	string global_relativeTrueNorth = "T";
 	int global_date;
 
+public:
+
+	//error variables
+	int errorType; //-1 means invalid argument, -2 means serial communications error
+	string errorMessage;
+
+	//this class supports the encoding of three NMEA sentence types, GGA, RMC, and VTG
+	enum messageTypes { GGA, RMC, VTG };
+	messageTypes messageType;
+
+	// port fields for serial communication
+	HANDLE hSerial;
+
 	//default constructor
 	nmeaHandler(){
+
+		errorType = 0;
 
 		// message type fields, 1 = gga, 2 = rmc, 3 = vtg
 		messageType = GGA;
@@ -74,111 +82,211 @@ public:
 
 	//setter functions
 
-	void setPortName(LPCSTR port){
+	int setPortName(LPCSTR port){
 		portName = port;
+		return 0;
 	}
 
-	void setBaudRate(int rate) {
+	int setBaudRate(int rate) {
 		//baudRate input is validated in OpenPort();
 		baudRate = rate;
+		return 0;
 	}
 
-	void setMessageType(messageTypes type){
+	int setMessageType(messageTypes type){
 		messageType = type;
+		return 0;
 	}
 
-	void setUTC(double utc) {
+	int setUTC(double utc) {
 		// 225446 = Time of fix 22:54:46 UTC
 
 		if (utc < 0){
-			throw std::invalid_argument("received negative value");
+			//throw std::invalid_argument("received negative value");
+			errorType = -1;
+			errorMessage = "received negative value";
+			return errorType;
 		}
 
 		if (utc > 999999.0){
-			throw std::invalid_argument("value too large");
+			//throw std::invalid_argument("value too large");
+			errorType = -1;
+			errorMessage = "value too large";
+			return errorType;
 		}
 
 		global_utc = utc;
+		
+		return 0;
 	}
 
-	void setLat(double lat){
+	int setLat(double lat){
 
 		if (lat > 90 || lat < -90){
-			throw std::invalid_argument("lat must be between -90 and 90 degrees");
+			//throw std::invalid_argument("lat must be between -90 and 90 degrees");
+			errorType = -1;
+			errorMessage = "lat must be between -90 and 90 degrees";
+			return errorType;
 		}
 
 		global_lat = lat;
+
+		return 0;
 	}
 
-	void setLon(double lon){
+	int setLon(double lon){
 
 		if (lon > 180 || lon < -180){
-			throw std::invalid_argument("lon must be between -180 and 180 degrees");
+			//throw std::invalid_argument("lon must be between -180 and 180 degrees");
+			errorType = -1;
+			errorMessage = "lon must be between -180 and 180 degrees";
+			return errorType;
 		}
 
 		global_lon = lon;
+
+		return 0;
 	}
 
-	void setNumSats(int num){
+	int setNumSats(int num){
 
 		if (num < 0){
-			throw std::invalid_argument("negative value");
+			//throw std::invalid_argument("negative value");
+			errorType = -1;
+			errorMessage = "negative value";
+			return errorType;
 		}
 
 		global_numSats = num;
+
+		return 0;
 	}
 
-	void setOrthoHeight(double alt){
+	int setOrthoHeight(double alt){
 
 		if (alt < 0){
-			throw std::invalid_argument("negative value");
+			//throw std::invalid_argument("negative value");
+			errorType = -1;
+			errorMessage = "negative value";
+			return errorType;
 		}
 
 		global_orthoHeight = alt;
+
+		return 0;
 	}
 
-	void setSpeedKnots(double speedKnots){
+	int setSpeedKnots(double speedKnots){
 
 		if (speedKnots < 0){
-			throw std::invalid_argument("negative value");
+			//throw std::invalid_argument("negative value");
+			errorType = -1;
+			errorMessage = "negative value";
+			return errorType;
 		}
 
 		global_speedKnots = speedKnots;
+
+		return 0;
 	}
 
-	void setSpeedOverGround(double sogKPH){
+	int setSpeedOverGround(double sogKPH){
 
 		if (sogKPH < 0){
-			throw std::invalid_argument("negative value");
+			//throw std::invalid_argument("negative value");
+			errorType = -1;
+			errorMessage = "negative value";
+			return errorType;
 		}
 
 		global_speedOverGroundKPH = sogKPH;
+
+		return 0;
 	}
 
-	void setTrackAngle(double angle){
+	int setTrackAngle(double angle){
 		global_trackAngle = angle;
+
+		return 0;
 	}
 
-	void setDate(int date){
+	int setDate(int date){
 
 		// 191194 = Date of fix  19 November 1994
 
 		if (date < 0){
-			throw std::invalid_argument("negative value");
+			//throw std::invalid_argument("negative value");
+			errorType = -1;
+			errorMessage = "negative value";
+			return errorType;
 		}
 
 		if (date > 999999){
-			throw std::invalid_argument("value too large");
+			//throw std::invalid_argument("value too large");
+			errorType = -1;
+			errorMessage = "value too large";
+			return errorType;
 		}
 
 		global_date = date;
+
+		return 0;
+	}
+
+	//getter functions
+
+	LPCSTR getPortName(){
+		return portName;
+	}
+
+	int getBaudRate(){
+		return baudRate;
+	}
+
+	messageTypes getMessageType(){
+		return messageType;
+	}
+
+	double getUTC(){
+		return global_utc;
+	}
+
+	double getLat(){
+		return global_lat;
+	}
+
+	double getLon(){
+		return global_lon;
+	}
+
+	int getNumSats(){
+		return global_numSats;
+	}
+
+	double getSpeedKnots(){
+		return global_speedKnots;
+	}
+
+	double getSpeedOverGround(){
+		return global_speedOverGroundKPH;
+	}
+
+	double getTrackAngle(){
+		return global_trackAngle;
+	}
+
+	int getDate(){
+		return global_date;
 	}
 
 	//other functions
 
+	void printError(){
+		cout << errorMessage << endl;
+	}
+
 	//for parsing lla data from csv to use for testing
-	vector<vector<string>> parseCSV()
-	{
+	vector<vector<string>> parseCSV(){
 		std::ifstream  data("testLog.csv");
 		std::string line;
 		std::vector<std::vector<std::string> > parsedCsv;
@@ -473,7 +581,7 @@ public:
 	}
 
 	//function to open serial port
-	void openPort(){
+	int openPort(){
 		hSerial = CreateFile(portName,
 			GENERIC_WRITE,
 			0,
@@ -483,15 +591,24 @@ public:
 			0);
 		if (hSerial == INVALID_HANDLE_VALUE){
 			if (GetLastError() == ERROR_FILE_NOT_FOUND){
-				cout << "//serial port does not exist. Inform user. \n";
+				//cout << "//serial port does not exist. Inform user. \n";
+				errorType = -2;
+				errorMessage = "serial port does not exist.Inform user.";
+				return errorType;
 			}
-			cout << "//some other error occurred with hSerial. Inform user. \n";
+			//cout << "//some other error occurred with hSerial. Inform user. \n";
+			errorType = -2;
+			errorMessage = "some other error occurred with hSerial. Inform user.";
+			return errorType;
 		}
 
 		DCB dcbSerialParams = { 0 };
 		dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
 		if (!GetCommState(hSerial, &dcbSerialParams)) {
-			cout << "//error getting state \n";
+			//cout << "//error getting state \n";
+			errorType = -2;
+			errorMessage = "//error getting state \n";
+			return errorType;
 		}
 		if (baudRate = 4800){
 			dcbSerialParams.BaudRate = CBR_4800;
@@ -509,13 +626,19 @@ public:
 			dcbSerialParams.BaudRate = CBR_115200;
 		}
 		else{
-			cout << "invalid baud rate";
+			//cout << "invalid baud rate";
+			errorType = -2;
+			errorMessage = "invalid baud rate";
+			return errorType;
 		}
 		dcbSerialParams.ByteSize = 8;
 		dcbSerialParams.StopBits = ONESTOPBIT;
 		dcbSerialParams.Parity = NOPARITY;
 		if (!SetCommState(hSerial, &dcbSerialParams)){
-			cout << "//error setting serial port state \n";
+			//cout << "//error setting serial port state \n";
+			errorType = -2;
+			errorMessage = "//error setting serial port state \n";
+			return errorType;
 		}
 
 		COMMTIMEOUTS timeouts = { 0 };
@@ -525,22 +648,24 @@ public:
 		timeouts.WriteTotalTimeoutConstant = 50;
 		timeouts.WriteTotalTimeoutMultiplier = 10;
 		if (!SetCommTimeouts(hSerial, &timeouts)){
-			cout << "//error occureed with setcommtimeouts. Inform user \n";
+			//cout << "//error occureed with setcommtimeouts. Inform user \n";
+			errorType = -2;
+			errorMessage = "//error occureed with setcommtimeouts. Inform user \n";
+			return errorType;
 		}
 	}
 
 	//function to close serial port
-	void closePort(){
+	int closePort(){
 		CloseHandle(hSerial);
+		return 0;
 	}
 
 	//function which allows for updating all sentence fields at once
-	void updateParams(
+	int updateParams(
 		double utc,
 		double lat,
-		string directionLat,
 		double lon,
-		string directionLon,
 		string status,
 		double speedKnots,
 		double speedOverGroundKPH,
@@ -548,21 +673,18 @@ public:
 		string relativeTrueNorth,
 		int date
 		){
-		global_utc = utc;
-		global_lat = lat;
-		global_directionLat = directionLat;
-		global_lon = lon;
-		global_directionLon = directionLon;
-		global_status = status;
-		global_speedKnots = speedKnots;
-		global_speedOverGroundKPH = speedOverGroundKPH;
-		global_trackAngle = trackAngle;
-		string global_relativeTrueNorth = relativeTrueNorth;
-		int global_date = date;
+		setUTC(utc);
+		setLat(lat);
+		setLon(lon);
+		setSpeedKnots(speedKnots);
+		setSpeedOverGround(speedOverGroundKPH);
+		setTrackAngle(trackAngle);
+		setDate(date);
+		return 0;
 	}
 
 	//send nmea sentence over the serial port
-	void sendMessage(){
+	int sendMessage(){
 
 		string message;
 
@@ -596,9 +718,15 @@ public:
 
 			if (!WriteFile(hSerial, (LPCVOID*)char_array, dwBytesToWrite, &dNoOfBytesWritten, NULL)){
 				//error occurred. Report to user.
-				cout << "failed to write \n";
+				//cout << "failed to write \n";
+				errorType = -2;
+				errorMessage = "failed to write \n";
+				return errorType;
+				
 			}
 		}
+
+		return 0;
 	}
 
 };
@@ -662,6 +790,8 @@ int main() {
 
 	n.closePort();
 
-	return 0;
+	cout << "program ended successfully" << endl;
+
+	return n.errorType;
 
 }
