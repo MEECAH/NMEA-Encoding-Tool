@@ -790,8 +790,6 @@ int main() {
 
 	n.closePort();
 
-	cout << "program ended successfully" << endl;
-
 	return n.errorType;
 
 }
